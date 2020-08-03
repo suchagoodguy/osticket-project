@@ -1,0 +1,20 @@
+---
+- hosts: mysql
+  become: yes
+  roles:
+    - mysql
+
+- hosts: websvc
+  become: yes
+  roles:
+    - web
+
+- hosts: balance
+  become: yes
+  roles:
+    - bal
+
+- hosts: redis
+  become: yes
+  roles:
+    - redis

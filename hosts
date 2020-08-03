@@ -1,0 +1,16 @@
+[balance]
+bal ansible_host=192.168.70.11 ansible_user=vagrant ansible_private_key_file=.vagrant/machines/bal/virtualbox/private_key
+
+[websvc]
+web1 ansible_host=192.168.70.21 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/web1/virtualbox/private_key
+web2 ansible_host=192.168.70.22 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/web2/virtualbox/private_key
+
+[redis]
+rc1 ansible_host=192.168.70.31 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/rc1/virtualbox/private_key
+rc2 ansible_host=192.168.70.32 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/rc2/virtualbox/private_key
+rc3 ansible_host=192.168.70.33 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/rc3/virtualbox/private_key
+
+[mysql]
+pxc1 ansible_host=192.168.70.41 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/pxc1/virtualbox/private_key
+pxc2 ansible_host=192.168.70.42 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/pxc2/virtualbox/private_key
+pxc3 ansible_host=192.168.70.43 ansible_ssh_user=vagrant ansible_private_key_file=.vagrant/machines/pxc3/virtualbox/private_key

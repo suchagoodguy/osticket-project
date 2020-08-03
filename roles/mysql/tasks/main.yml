@@ -1,0 +1,99 @@
+---
+     - name: enable and start ntp
+       service: name=ntpd
+           enabled=yes
+           state=started
+
+     - name: Install Percona Repo
+       yum:
+          name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+          state: present
+
+     - name: Enable Repo Percona for PXC8
+       shell: percona-release disable all; percona-release setup pxc80; percona-release enable pxc-80; yum -y update
+       register: enable_percona_repo
+
+     - meta: flush_handlers
+     - debug:
+         var: enable_percona_repo
+
+     - name: Install PXC 8
+       yum:
+          name: "percona-xtradb-cluster-full"
+          state: present
+
+     - name: Enable binlogs
+       ini_file:
+          path: /etc/my.cnf
+          section: mysqld
+          option: "{{ item.option }}" 
+          value: "{{ item.value }}"
+       with_items:
+          - { option: log_bin, value: "binlog" }
+          - { option: log_slave_updates, value: "1" }
+
+     - name: Galera configuration
+       ini_file:
+          path: /etc/my.cnf
+          section: mysqld
+          option: "{{ item.option }}"
+          value: "{{ item.value }}"
+       with_items:
+          - { option: default-authentication-plugin, value: "mysql_native_password" }
+          - { option: wsrep_cluster_name, value: "osticket-cluster" }
+          - { option: wsrep_node_address, value: "{{ ansible_facts.eth1.ipv4.address }}" }
+          - { option: wsrep_node_name, value: "{{ ansible_hostname }}" }
+          - { option: wsrep_cluster_address, value: "gcomm://192.168.70.41,192.168.70.42,192.168.70.43" }
+          - { option: pxc-encrypt-cluster-traffic, value: "OFF" }
+
+     - name: Change server_id
+       ini_file:
+         path: /etc/my.cnf
+         section: mysqld
+         option: server_id
+         value: "10"
+
+     - name: Disable SELinux
+       shell: setenforce 0; echo -e "[client]\nuser=root\npassword=mysqlgfhjkm" > /root/.my.cnf
+
+     - name: start mysql daemon at pxc1 with bootstrap.service
+       service: name=mysql@bootstrap.service
+                state=started
+       when: ansible_facts['nodename'] == 'pxc1'
+
+     - name: python mysqldb module is required now install it
+       yum: name=MySQL-python
+            state=present
+
+     - name: start mysql daemon at pxc1 with bootstrap.service
+       service: name=mysql@bootstrap.service
+                state=started
+       when: ansible_facts['nodename'] == 'pxc1'
+
+     - shell: cat /var/log/mysqld.log | grep "temporary password" | grep -oE '[^ ]+$'
+       register: tmp_root_password
+       when: ansible_facts['nodename'] == 'pxc1'
+
+     - name: Set new password from temporary password
+       shell: mysql -e "SET PASSWORD = 'mysqlgfhjkm';" --connect-expired-password -uroot -p"{{ tmp_root_password.stdout }}"
+       when: ansible_facts['nodename'] == 'pxc1'
+
+     - name: update mysql root password for all root accounts and create new user sstuser
+       mysql_user:
+         name: ['sstuser', 'proxysql']
+         password: "'mysqlgfhjkm'"
+         priv: "*.*:ALL,GRANT"
+         state: present
+       when: ansible_facts['nodename'] == 'pxc1'
+
+     - name: Start mysql daemon pxc2
+       service: name=mysql
+                enabled="yes"
+                state=started
+       when: ansible_facts['nodename'] == 'pxc2'
+
+     - name: Start mysql daemon in pxc3
+       service: name=mysql
+                enabled="yes"
+                state=started
+       when: ansible_facts['nodename'] == 'pxc3'
