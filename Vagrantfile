@@ -34,7 +34,8 @@ Vagrant.configure("2") do |config|
         localedef -i ru_RU -f UTF-8 ru_RU-UTF-8
         yum install -y epel-release
         yum install -y mc nginx wget unzip ntp
-        yum install -y php php-gd php-mysqli php-imap php-mbstring php-intl php-json php-xml php-apcu php-opcache php-fpm
+        yum install -y php php-gd php-mysqli php-imap php-mbstring php-intl
+        yum install -y php-json php-xml php-apcu php-opcache php-fpm
       SHELL
     end
   end

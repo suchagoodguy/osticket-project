@@ -80,10 +80,18 @@
 
      - name: update mysql root password for all root accounts and create new user sstuser
        mysql_user:
-         name: ['sstuser', 'proxysql']
-         password: "'mysqlgfhjkm'"
+         name: "{{ item }}"
+         host: "192.%"
+         password: "mysqlgfhjkm"
          priv: "*.*:ALL,GRANT"
          state: present
+       with_items:
+         - "sstuser"
+         - "root"
+       when: ansible_facts['nodename'] == 'pxc1'
+
+     - name: Create database
+       shell: mysql -e "CREATE DATABASE IF NOT EXISTS osticket;" -uroot -pmysqlgfhjkm
        when: ansible_facts['nodename'] == 'pxc1'
 
      - name: Start mysql daemon pxc2

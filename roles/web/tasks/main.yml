@@ -1,56 +1,58 @@
 ---
-     - name: enable and start ntp
-       service: name=ntpd
+- name: enable and start ntp
+  service: name=ntpd
            enabled=yes
            state=started
 
-     - name: Install Percona Repo
-       yum:
-          name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
-          state: present
+- name: Install Percona Repo
+  yum:
+    name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+    state: present
 
-     - name: Enable Repo Percona for PXC8
-       shell: percona-release disable all; percona-release setup pxc80; percona-release enable pxc-80; yum -y update
-       register: enable_percona_repo
+- name: Enable Repo Percona for PXC8
+  shell: percona-release disable all; percona-release setup pxc80; percona-release enable pxc-80; yum -y update
+  register: enable_percona_repo
 
-     - meta: flush_handlers
-     - debug:
-         var: enable_percona_repo
+- meta: flush_handlers
+- debug:
+    var: enable_percona_repo
 
-     - name: Install PXC 8
-       yum:
-          name: "percona-xtradb-cluster-full"
-          state: present
+- name: Install PXC 8 client and ProxySQL 2
+  yum:
+    name: ['percona-xtradb-cluster-client', 'proxysql2']
+    state: present
 
-     - name: Enable binlogs
-       ini_file:
-          path: /etc/my.cnf
-          section: mysqld
-          option: "{{ item.option }}" 
-          value: "{{ item.value }}"
-       with_items:
-          - { option: log_bin, value: "binlog" }
-          - { option: log_slave_updates, value: "1" }
+- name: Start ProxySQL
+  service: name=proxysql
+           state=started
 
-     - name: Galera configuration
-       ini_file:
-          path: /etc/my.cnf
-          section: mysqld
-          option: "{{ item.option }}"
-          value: "{{ item.value }}"
-       with_items:
-          - { option: wsrep_cluster_name, value: "osticket-cluster" }
-          - { option: wsrep_node_address, value: "{{ ansible_facts.eth1.ipv4.address }}" }
-          - { option: wsrep_node_name, value: "{{ ansible_hostname }}" }
-          - { option: wsrep_cluster_address, value: "gcomm://192.168.70.41,192.168.70.42,192.168.70.43" }
-          - { option: pxc-encrypt-cluster-traffic, value: "OFF" }
+- name: Wait for ProxySQL to start listen
+  wait_for:
+    port: 6032
+    state: drained
 
-     - name: Change server_id
-       ini_file:
-         path: /etc/my.cnf
-         section: mysqld
-         option: server_id
-         value: "10"
+- name: Configure ProxySQL step 1
+  shell: cp -f /vagrant/proxysql-admin.cnf /etc/proxysql-admin.cnf; proxysql-admin -e --use-existing-monitor-password; proxysql-admin --update-mysql-version
 
-     - name: Disable SELinux
-       shell: setenforce 0; echo -e "[client]\nuser=root\npassword=mysqlgfhjkm" > /root/.my.cnf
+- name: Configure ProxySQL step 2
+  shell: mysql -e "UPDATE global_variables SET variable_value='0.0.0.0:3306' WHERE variable_name='mysql-interfaces'; SAVE MYSQL VARIABLES TO DISK;" -uadmin -padmin -h127.0.0.1 -P6032
+
+- name: Start ProxySQL
+  service: name=proxysql
+           state=restarted
+
+- name: Disable SELinux and copy nginx configuration files
+  shell: setenforce 0; cp -f /vagrant/nginx.conf /etc/nginx/nginx.conf; cp -f /vagrant/osticket.conf /etc/nginx/conf.d/osticket.conf
+
+- name: Download and unzip osTicket russian version
+  shell: wget http://osticket.ru/data/uploads/osticket.ru.1.10.4.zip; unzip osticket.ru.1.10.4.zip -d /var/www/; mv /var/www/osTicket-v1.10.4 -T /var/www/osticket; cp /var/www/osticket/upload/include/ost-{sample,}config.php; chmod 666 /var/www/osticket/upload/include/ost-config.php
+
+- name: Start nginx
+  service: name=nginx
+           enabled=yes
+           state=started
+
+- name: Start php-fpm
+  service: name=php-fpm
+           enabled=yes
+           state=started
