@@ -53,6 +53,9 @@ Vagrant.configure("2") do |config|
         mkdir -p ~root/.ssh; cp ~vagrant/.ssh/auth* ~root/.ssh
         yum install -y epel-release
         yum install -y mc ntp
+        yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+        yum-config-manager --enable remi
+        yum install -y redis
       SHELL
     end
   end

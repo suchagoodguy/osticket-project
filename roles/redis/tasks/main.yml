@@ -1,0 +1,30 @@
+---
+- name: enable and start ntp
+  service: name=ntpd
+           enabled=yes
+           state=started
+
+- name: Disable SELinux
+  shell: setenforce 0
+
+- name: configure redis
+  shell: a=$(ip ad show dev eth1 | grep 'inet ' | awk '{print $2;}' | awk -F / '{print $1;}'); sed -i "s/bind 127.0.0.1$/bind 127.0.0.1 $a/" /etc/redis.conf
+
+- name: configure redis cluster
+  shell: sed -i "s/# cluster-enabled yes/cluster-enabled yes/" /etc/redis.conf; sed -i "s/# cluster-config-file nodes-6379.conf/cluster-config-file nodes-6379.conf/" /etc/redis.conf; sed -i "s/# cluster-node-timeout 15000/cluster-node-timeout 5000/" /etc/redis.conf
+
+- name: enable and start redis
+  service: name=redis
+           enabled=yes
+           state=started
+
+- name: wait for redis to accept connections 1
+  wait_for:
+    port: 6379
+
+- name: wait for redis to accept connections 2
+  wait_for:
+    port: 16379
+
+- name: run redis cluster
+  shell: yes | redis-cli --cluster create 192.168.70.31:6379 192.168.70.32:6379 192.168.70.33:6379
