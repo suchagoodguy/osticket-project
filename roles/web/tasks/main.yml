@@ -32,9 +32,12 @@
     state: drained
 
 - name: Configure ProxySQL step 1
-  shell: cp -f /vagrant/proxysql-admin.cnf /etc/proxysql-admin.cnf; proxysql-admin -e --use-existing-monitor-password; proxysql-admin --update-mysql-version
+  shell: cp -f /vagrant/proxysql-admin.cnf /etc/proxysql-admin.cnf; h=$(hostname); sed -i "s/MONITOR_USERNAME='monitor'/MONITOR_USERNAME='monitor$h'/" /etc/proxysql-admin.cnf
 
 - name: Configure ProxySQL step 2
+  shell: proxysql-admin -e --use-existing-monitor-password; proxysql-admin --update-mysql-version
+
+- name: Configure ProxySQL step 3
   shell: mysql -e "UPDATE global_variables SET variable_value='0.0.0.0:3306' WHERE variable_name='mysql-interfaces'; SAVE MYSQL VARIABLES TO DISK;" -uadmin -padmin -h127.0.0.1 -P6032
 
 - name: Start ProxySQL

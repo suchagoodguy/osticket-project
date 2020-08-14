@@ -11,7 +11,7 @@
   shell: a=$(ip ad show dev eth1 | grep 'inet ' | awk '{print $2;}' | awk -F / '{print $1;}'); sed -i "s/bind 127.0.0.1$/bind 127.0.0.1 $a/" /etc/redis.conf
 
 - name: configure redis cluster
-  shell: sed -i "s/# cluster-enabled yes/cluster-enabled yes/" /etc/redis.conf; sed -i "s/# cluster-config-file nodes-6379.conf/cluster-config-file nodes-6379.conf/" /etc/redis.conf; sed -i "s/# cluster-node-timeout 15000/cluster-node-timeout 5000/" /etc/redis.conf
+  shell: sed -i "s/# cluster-enabled yes/cluster-enabled yes/" /etc/redis.conf; sed -i "s/# cluster-config-file nodes-6379.conf/cluster-config-file nodes-6379.conf/" /etc/redis.conf; sed -i "s/# cluster-node-timeout 15000/cluster-node-timeout 5000/" /etc/redis.conf; sed -i "s/appendonly no/appendonly yes/" /etc/redis.conf
 
 - name: enable and start redis
   service: name=redis
