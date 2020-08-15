@@ -13,8 +13,3 @@
   become: yes
   roles:
     - bal
-
-- hosts: redis
-  become: yes
-  roles:
-    - redis

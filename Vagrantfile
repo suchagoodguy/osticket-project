@@ -41,26 +41,6 @@ Vagrant.configure("2") do |config|
   end
 
   (1..3).each do |i|
-    config.vm.define "rc#{i}" do |node|
-      node.vm.box = "centos/7"
-      node.vm.hostname = "rc#{i}"
-      node.vm.network "private_network", ip: "192.168.70.3#{i}"
-      node.vm.provider :virtualbox do |vb|
-        vb.customize ["modifyvm", :id, "--memory", "256"]
-        vb.customize ["modifyvm", :id, "--cpus", "1"]
-      end
-      node.vm.provision "shell", inline: <<-SHELL
-        mkdir -p ~root/.ssh; cp ~vagrant/.ssh/auth* ~root/.ssh
-        yum install -y epel-release
-        yum install -y mc ntp
-        yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-        yum-config-manager --enable remi
-        yum install -y redis
-      SHELL
-    end
-  end
-
-  (1..3).each do |i|
     config.vm.define "pxc#{i}" do |node|
       node.vm.box = "centos/7"
       node.vm.hostname = "pxc#{i}"

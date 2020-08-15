@@ -59,3 +59,10 @@
   service: name=php-fpm
            enabled=yes
            state=started
+
+- name Configure RSync
+  shell: echo "[osticket]" >> /etc/rsyncd.conf; echo "path = /var/www/osticket" >> /etc/rsyncd.conf
+
+- name Start RSync
+  service: name=rsyncd
+           state=started
