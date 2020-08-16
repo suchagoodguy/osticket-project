@@ -2,10 +2,6 @@
 
 rm -rf /var/www/osticket/upload/setup
 
-echo "[osticket]" >> /etc/rsyncd.conf
-echo "path = /var/www/osticket" >> /etc/rsyncd.conf
-systemctl start rsyncd
-
 a=$(ip ad show dev eth1 | grep 'inet ' | awk '{print $2;}' | awk -F / '{print $1;}')
 
 if [[ "$a" == "192.168.70.21" ]]; then

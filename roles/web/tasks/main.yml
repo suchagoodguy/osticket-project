@@ -59,3 +59,14 @@
   service: name=php-fpm
            enabled=yes
            state=started
+
+- name: Configure RSync
+  ini_file:
+    path: /etc/rsyncd.conf
+    section: osticket
+    option: path
+    value: /var/www/osticket
+
+- name: Start RSync daemon
+  service: name=rsyncd
+           state=started
