@@ -21,6 +21,6 @@ user root
 
 password mysqlgfhjkm
 
-After successful initial setup run at both web1 and web2:
+After successful initial setup run as root at both web1 and web2:
 
 /vagrant/remove_setup_scripts

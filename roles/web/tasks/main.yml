@@ -70,3 +70,8 @@
 - name: Start RSync daemon
   service: name=rsyncd
            state=started
+
+- name: Make remove_setup_scripts executable
+  file:
+    path: /vagrant/remove_setup_scripts
+    mode: 0744
